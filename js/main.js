@@ -115,12 +115,12 @@ function generatePortfolio(lang = currentLanguage) {
             </div>
             <div class="portfolio-info">
                 <div class="portfolio-tags">${tags}</div>
-                <h3><bdi>${escapeHTML(projectName)}</bdi></h3>
+                <h3><a href="work/${data.slug}/" class="portfolio-link"><bdi>${escapeHTML(projectName)}</bdi></a></h3>
                 <p>${escapeHTML(projectTitle)}</p>
             </div>
         `;
 
-        item.addEventListener('click', () => showProjectDetails(projectName, data, lang));
+        item.addEventListener('click', (e) => { if (e.metaKey || e.ctrlKey) return; e.preventDefault(); showProjectDetails(projectName, data, lang); });
         grid.appendChild(item);
     });
 }

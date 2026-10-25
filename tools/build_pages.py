@@ -25,6 +25,7 @@ def nest(i):
     s = tr[nested[i]:tr.index('}', nested[i])]
     return {unq(k): unq(v) for k, v in re.findall(r"'((?:[^'\\]|\\.)*)':\s*'((?:[^'\\]|\\.)*)'", s)}
 en = nest(0)
+trk = nest(1)
 CAT = {'identity': ('هوية بصرية', 'Brand Identity'), 'print': ('مطبوعات وتغليف', 'Print & Packaging'),
        'logo': ('تصميم شعار', 'Logo Design'), 'social': ('تصاميم سوشال ميديا', 'Social Media Design'),
        'motion': ('موشن جرافيك', 'Motion Graphics')}
@@ -33,7 +34,7 @@ today = datetime.date.today().isoformat()
 
 def page(p, others):
     slug = p['slug']; base = f'../../assets/portfolio/{slug}/'
-    d_ar = ar.get(p['name'], ''); d_en = en.get(p['name'], '')
+    d_ar = ar.get(p['name'], ''); d_en = en.get(p['name'], ''); d_tr = trk.get(p['name'], '')
     cat_ar = ' · '.join(CAT[c][0] for c in p['cats'] if c in CAT); cat_en = ' · '.join(CAT[c][1] for c in p['cats'] if c in CAT)
     title = f"{p['name']} — {cat_ar} | Look Art Design Studio"
     desc = (d_ar or cat_ar) + (f' — {d_en}' if d_en else '') + ' | استوديو Look Art للتصميم، إسطنبول.'
@@ -45,11 +46,11 @@ def page(p, others):
     wa = 'https://wa.me/' + WA + '?text=' + __import__('urllib.parse', fromlist=['quote']).quote(f'مرحباً، شفت مشروع {p["name"]} على موقعكم وبدي استفسر عن مشروع مشابه')
     more = ''.join(f'<a class="w-more" href="../{o["slug"]}/"><img src="../../assets/portfolio/{o["slug"]}/cover.jpg" alt="{E(o["name"])}" loading="lazy"><span>{E(o["name"])}</span></a>' for o in others)
     ld = {"@context": "https://schema.org", "@type": "CreativeWork", "name": p['name'], "description": d_ar or cat_ar,
-          "image": img, "url": url, "genre": cat_en, "inLanguage": ["ar", "en"],
+          "image": img, "url": url, "genre": cat_en, "inLanguage": ["ar", "en", "tr"],
           "creator": {"@type": "Organization", "name": "Look Art Design Studio", "url": SITE + '/'}}
     crumbs = {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
         {"@type": "ListItem", "position": 1, "name": "Look Art", "item": SITE + '/'},
-        {"@type": "ListItem", "position": 2, "name": "أعمالنا", "item": SITE + '/#portfolio'},
+        {"@type": "ListItem", "position": 2, "name": "أعمالنا", "item": SITE + '/work/'},
         {"@type": "ListItem", "position": 3, "name": p['name'], "item": url}]}
     return f'''<!doctype html>
 <html lang="ar" dir="rtl">
@@ -88,14 +89,15 @@ footer{{border-top:1px solid var(--line);padding:24px 0;color:var(--muted);font-
 </style>
 </head>
 <body>
-<header><div class="w"><a href="../../"><img src="../../logo-horizontal.svg" alt="Look Art Design Studio"></a><a class="back" href="../../#portfolio">→ كل الأعمال</a></div></header>
+<header><div class="w"><a href="../../"><img src="../../logo-horizontal.svg" alt="Look Art Design Studio"></a><a class="back" href="../">→ كل الأعمال</a></div></header>
 <main class="w">
 <section class="hero">
-<p class="crumb"><a href="../../">Look Art</a> / <a href="../../#portfolio">أعمالنا</a> / {E(p['name'])}</p>
+<p class="crumb"><a href="../../">Look Art</a> / <a href="../">أعمالنا</a> / {E(p['name'])}</p>
 <h1>{E(p['name'])}</h1>
 <div class="tags">{''.join(f'<span>{E(CAT[c][0])}</span>' for c in p['cats'] if c in CAT)}</div>
 <p class="lead">{E(d_ar)}</p>
 {f'<p class="en" lang="en">{E(d_en)}</p>' if d_en else ''}
+{f'<p class="en" lang="tr">{E(d_tr)}</p>' if d_tr else ''}
 </section>
 <section class="gal">
 {media}
@@ -119,7 +121,44 @@ for i, p in enumerate(P):
     os.makedirs(f"work/{p['slug']}", exist_ok=True)
     open(f"work/{p['slug']}/index.html", 'w', encoding='utf-8').write(page(p, others))
 
-urls = [f'  <url><loc>{SITE}/</loc><lastmod>{today}</lastmod><priority>1.0</priority></url>']
+HUB_CSS = page(P[0], P[1:5]).split('<style>')[1].split('</style>')[0]
+groups = ''
+for c in ['identity', 'print', 'logo', 'social', 'motion']:
+    items = [p for p in P if p['cats'] and p['cats'][0] == c]
+    if not items: continue
+    cards = ''.join(f'<a class="w-more" href="{p["slug"]}/"><img src="../assets/portfolio/{p["slug"]}/cover.jpg" alt="{E(p["name"])} — {E(CAT[c][0])}" loading="lazy"><span>{E(p["name"])}</span><small>{E(ar.get(p["name"], ""))}</small></a>' for p in items)
+    groups += f'<section class="more"><h2>{E(CAT[c][0])} <span lang="en">· {E(CAT[c][1])}</span></h2><div class="more-grid">{cards}</div></section>'
+hub_ld = {"@context": "https://schema.org", "@type": "CollectionPage", "name": "أعمال Look Art Design Studio", "url": SITE + '/work/',
+          "hasPart": [{"@type": "CreativeWork", "name": p['name'], "url": f"{SITE}/work/{p['slug']}/"} for p in P]}
+hub = f'''<!doctype html>
+<html lang="ar" dir="rtl"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>أعمالنا — هويات بصرية، شعارات، تغليف وسوشال ميديا | Look Art Design Studio إسطنبول</title>
+<meta name="description" content="معرض أعمال استوديو Look Art في إسطنبول: {len(P)} مشروع هوية بصرية وتصميم شعار وتغليف ومطبوعات وسوشال ميديا وموشن جرافيك لمطاعم وكافيهات ومكاتب محاماة وعيادات وشركات. Brand identity, logo & packaging design studio in Istanbul — Kurumsal kimlik ve logo tasarımı.">
+<link rel="canonical" href="{SITE}/work/">
+<meta property="og:type" content="website"><meta property="og:title" content="أعمال Look Art Design Studio"><meta property="og:url" content="{SITE}/work/"><meta property="og:image" content="{SITE}/og-image.jpg"><meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script type="application/ld+json">{json.dumps(hub_ld, ensure_ascii=False)}</script>
+<style>{HUB_CSS} .w-more small{{display:block;padding:0 14px 12px;color:var(--muted);font-size:.8rem;line-height:1.5}} .more h2 span{{color:var(--muted);font-weight:600;font-size:.9rem}} .more{{margin-top:30px}}</style>
+</head><body>
+<header><div class="w"><a href="../"><img src="../logo-horizontal.svg" alt="Look Art Design Studio"></a><a class="back" href="../">→ الصفحة الرئيسية</a></div></header>
+<main class="w">
+<section class="hero"><p class="crumb"><a href="../">Look Art</a> / أعمالنا</p>
+<h1>أعمال Look Art</h1>
+<p class="lead">{len(P)} مشروع بين هويات بصرية متكاملة، شعارات، تغليف ومطبوعات، تصاميم سوشال ميديا وموشن جرافيك، لعلامات في تركيا والسعودية والخليج وسوريا.</p>
+<p class="en" lang="en">Brand identity, logo, packaging, social media and motion design projects by Look Art Design Studio, Istanbul.</p>
+<p class="en" lang="tr">İstanbul merkezli Look Art Design Studio: kurumsal kimlik, logo, ambalaj, sosyal medya ve motion grafik tasarım projeleri.</p>
+</section>
+{groups}
+<section class="cta"><h2>جاهز نبلش مشروعك؟</h2><p>احكيلنا عن علامتك ومنرجعلك بخطة واضحة.</p><a class="btn" href="https://wa.me/{WA}" target="_blank" rel="noopener">تواصل عبر واتساب</a><a class="btn alt" href="../#contact">اطلب عرض سعر</a></section>
+</main>
+<footer>© {datetime.date.today().year} Look Art Design Studio — إسطنبول · <a href="../">الصفحة الرئيسية</a></footer>
+</body></html>
+'''
+open('work/index.html', 'w', encoding='utf-8').write(hub)
+urls = [f'  <url><loc>{SITE}/</loc><lastmod>{today}</lastmod><priority>1.0</priority></url>',
+        f'  <url><loc>{SITE}/work/</loc><lastmod>{today}</lastmod><priority>0.9</priority></url>']
 urls += [f'  <url><loc>{SITE}/work/{p["slug"]}/</loc><lastmod>{today}</lastmod><priority>0.8</priority></url>' for p in P]
 open('sitemap.xml', 'w').write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + '\n'.join(urls) + '\n</urlset>\n')
 json.dump({p['name']: p['slug'] for p in P}, open('work/index.json', 'w'), ensure_ascii=False)

@@ -1471,3 +1471,5 @@ html[dir="ltr"] .scroll-progress { transform-origin: left; }
 .learn-modal .project-gallery.video { display: flex; justify-content: center; min-height: 200px; }
 .learn-modal .project-gallery.video video { height: min(62vh, 640px); width: auto; aspect-ratio: 9 / 16; max-width: 100%; max-height: none; flex: 0 0 auto; background: #000; border-radius: 12px; }
 @media (max-width: 760px) { .learn-modal .project-gallery.video video { height: auto; width: 100%; } }
+
+.portfolio-link{color:inherit;text-decoration:none}
