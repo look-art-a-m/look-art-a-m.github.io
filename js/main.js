@@ -158,6 +158,7 @@ function showProjectDetails(projectName, data, lang = currentLanguage) {
                 <a href="https://wa.me/905312866822?text=${waText}" class="cta-btn primary" target="_blank" rel="noopener">
                     ${escapeHTML(t('portfolio.contactProject', lang))}
                 </a>
+                ${data.slug ? `<a href="work/${data.slug}/" class="cta-btn secondary">${{ar:'صفحة المشروع',en:'Project page',tr:'Proje sayfası'}[lang] || 'صفحة المشروع'}</a>` : ''}
             </div>
         </div>
     `;
